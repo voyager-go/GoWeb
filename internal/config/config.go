@@ -43,10 +43,9 @@ func (c *AppConfig) GetMysqlDSN() string {
 
 // GetRedisURL 返回 Redis 连接 URL
 func (c *AppConfig) GetRedisURL() string {
-	url := fmt.Sprintf("redis://%s:%s/%d",
+	url := fmt.Sprintf("%s:%d",
 		c.Redis.Host,
-		c.Redis.Password,
-		c.Redis.DB,
+		c.Redis.Port,
 	)
 
 	return url

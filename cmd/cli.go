@@ -5,6 +5,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/voyager-go/GoWeb/internal/config"
 	"github.com/voyager-go/GoWeb/pkg/logging"
+	"github.com/voyager-go/GoWeb/pkg/mysql"
+	"github.com/voyager-go/GoWeb/pkg/redis"
 	"path/filepath"
 	"strconv"
 )
@@ -26,10 +28,10 @@ var App = &cli.App{
 		config.InitConfig(c.String("config-file"))
 		// 初始化日志追踪
 		logging.InitLogger(filepath.Join("storage", "logs"))
-		// 初始化数据库连接
-		//mysql.NewMysql()
-		// 初始化Redis连接
-		//redis.NewRedis()
+		// 初始化Redis
+		redis.InitPool(config.App.GetRedisURL(), "")
+		// 初始化MYSQL
+		mysql.InitConn(config.App.GetMysqlDSN())
 		// 初始化验证器翻译
 		//validator_trans.NewTrans()
 		return nil
@@ -43,5 +45,10 @@ var App = &cli.App{
 		})
 		// 启动项目
 		return srv.Run(":" + strconv.Itoa(config.App.Server.Port))
+	},
+	After: func(*cli.Context) error {
+		defer redis.Conn.Close()
+		defer mysql.Conn.Close()
+		return nil
 	},
 }
