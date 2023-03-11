@@ -12,7 +12,7 @@ import (
 
 var Log *logrus.Logger
 
-func InitLogger(logPath string) error {
+func InitLogger(logPath string) {
 	Log = logrus.New()
 	Log.SetFormatter(&logrus.JSONFormatter{})
 	Log.SetOutput(io.MultiWriter(os.Stdout, createLogFile(logPath)))
@@ -25,7 +25,6 @@ func InitLogger(logPath string) error {
 		},
 		&logrus.JSONFormatter{},
 	))
-	return nil
 }
 
 func createLogFile(logPath string) *os.File {

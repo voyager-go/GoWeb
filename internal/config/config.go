@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 )
 
+var App = new(AppConfig)
+
 // AppConfig 包含应用程序的所有配置项，包括 MySQL 和 Redis 的配置项
 type AppConfig struct {
 	Server   ServerConfig `yaml:"server"`
@@ -13,20 +15,17 @@ type AppConfig struct {
 	Redis    RedisConfig  `yaml:"redis"`
 }
 
-// LoadConfig 从指定路径读取配置文件，并解析为 AppConfig 结构体
-func LoadConfig(configFile string) (*AppConfig, error) {
+// InitConfig 从指定路径读取配置文件，并解析为 AppConfig 结构体
+func InitConfig(configFile string) {
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	config := new(AppConfig)
-	err = yaml.Unmarshal(data, config)
+	err = yaml.Unmarshal(data, App)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	return config, nil
 }
 
 // GetMysqlDSN 返回 MySQL 数据源名称

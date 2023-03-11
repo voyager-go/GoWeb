@@ -1,14 +1,14 @@
 server:
   host: "127.0.0.1"
-  port: 8080
+  port: 8088
 
 database:
   driver: "mysql"
   host: "127.0.0.1"
   port: 3306
   username: "root"
-  password: "123456"
-  name: "myapp"
+  password: "SLf1AC0cY5u8cED"
+  name: "tuibook"
 
 redis:
   host: "127.0.0.1"
