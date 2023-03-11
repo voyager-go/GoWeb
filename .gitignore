@@ -1,15 +1,18 @@
-# Binaries for programs and plugins
+# Go specific
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
-*.test
+# Ignore macOS's metadata
+.DS_Store
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# Ignore go build artifacts and directories
+/bin/
+/pkg/
+/vendor/
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+# Ignore IDE directories
+.idea/
+.vscode/
