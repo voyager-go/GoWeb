@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
+	"os"
 )
 
 var App = new(AppConfig)
@@ -17,7 +17,7 @@ type AppConfig struct {
 
 // InitConfig 从指定路径读取配置文件，并解析为 AppConfig 结构体
 func InitConfig(configFile string) {
-	data, err := ioutil.ReadFile(configFile)
+	data, err := os.ReadFile(configFile)
 	if err != nil {
 		panic(err)
 	}

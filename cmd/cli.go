@@ -6,6 +6,7 @@ import (
 	"github.com/voyager-go/GoWeb/internal/config"
 	"github.com/voyager-go/GoWeb/pkg/logging"
 	"github.com/voyager-go/GoWeb/pkg/mysql"
+	"github.com/voyager-go/GoWeb/pkg/orm"
 	"github.com/voyager-go/GoWeb/pkg/redis"
 	"path/filepath"
 	"strconv"
@@ -30,8 +31,8 @@ var App = &cli.App{
 		logging.InitLogger(filepath.Join("storage", "logs"))
 		// 初始化Redis
 		redis.InitPool(config.App.GetRedisURL(), "")
-		// 初始化MYSQL
-		mysql.InitConn(config.App.GetMysqlDSN())
+		// 初始化Gorm
+		orm.InitPool(config.App.GetMysqlDSN())
 		// 初始化验证器翻译
 		//validator_trans.NewTrans()
 		return nil
