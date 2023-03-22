@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/voyager-go/GoWeb/internal/model"
 	"github.com/voyager-go/GoWeb/internal/service"
-	"math"
+	"github.com/voyager-go/GoWeb/pkg/response"
 	"strconv"
 )
 
@@ -23,19 +23,19 @@ func (api *UserAPI) Register(c *gin.Context) {
 	// 解析请求参数
 	var user model.User
 	if err := c.BindJSON(&user); err != nil {
-		c.JSON(400, gin.H{"error": "invalid request"})
+		response.Fail(c, response.RequestParameterError, err)
 		return
 	}
 
 	// 调用 UserService 的 Create 方法创建用户
 	result, err := api.service.Create(&user)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		response.Fail(c, response.OperationExecutionFailure, err)
 		return
 	}
 
 	// 返回结果给客户端
-	c.JSON(200, result)
+	response.OK(c, result)
 }
 
 // Update 更新用户信息
@@ -56,26 +56,6 @@ func (api *UserAPI) Update(c *gin.Context) {
 
 	// 返回结果给客户端
 	c.JSON(200, result)
-}
-
-// Delete 删除用户
-func (api *UserAPI) Delete(c *gin.Context) {
-	// 获取用户 ID 参数
-	id, err := GetIDParam(c)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 调用 UserService 的 Delete 方法删除用户
-	err = api.service.Delete(id)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 返回结果给客户端
-	c.Status(204)
 }
 
 // GetByID 根据 ID 获取用户信息
@@ -104,36 +84,6 @@ func (api *UserAPI) GetByID(c *gin.Context) {
 	c.JSON(200, result)
 }
 
-// List 分页查询用户列表
-func (api *UserAPI) List(c *gin.Context) {
-	// 获取分页参数
-	pageNum, pageSize, err := GetPaginationParams(c)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 调用 UserService 的 List 方法查询用户列表
-	users, total, err := api.service.List(pageNum, pageSize)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 构造分页结果
-	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
-	pagination := &model.Pagination{
-		PageNum:    pageNum,
-		PageSize:   pageSize,
-		Total:      total,
-		TotalPages: totalPages,
-		List:       users,
-	}
-
-	// 返回结果给客户端
-	c.JSON(200, pagination)
-}
-
 // GetIDParam 从 URL 参数中获取用户 ID
 func GetIDParam(c *gin.Context) (uint, error) {
 	idStr := c.Param("id")
@@ -146,8 +96,8 @@ func GetIDParam(c *gin.Context) (uint, error) {
 
 // GetPaginationParams 从 URL 参数中获取分页参数
 func GetPaginationParams(c *gin.Context) (int, int, error) {
-	pageNumStr := c.DefaultQuery("pageNum", "1")
-	pageSizeStr := c.DefaultQuery("pageSize", "20")
+	pageNumStr := c.DefaultQuery("page_num", "1")
+	pageSizeStr := c.DefaultQuery("page_size", "20")
 
 	fmt.Println(pageNumStr, pageSizeStr)
 	pageNum, err := strconv.Atoi(pageNumStr)

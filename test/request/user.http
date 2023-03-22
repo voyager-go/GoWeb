@@ -1,0 +1,11 @@
+POST http://localhost:8088/api/user/sign-up
+Content-Type: application/json
+
+{
+  "phone": "13800000001",
+  "nickname": "Alice",
+  "email": "alice@example.com",
+  "password": "password"
+}
+
+###

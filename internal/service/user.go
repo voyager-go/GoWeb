@@ -2,22 +2,44 @@ package service
 
 import (
 	"errors"
+	"github.com/voyager-go/GoWeb/internal/interfaces"
 	"github.com/voyager-go/GoWeb/internal/model"
 	"github.com/voyager-go/GoWeb/internal/repository"
+	"github.com/voyager-go/GoWeb/pkg/formatTime"
 	"github.com/voyager-go/GoWeb/pkg/validator"
 	"gorm.io/gorm"
 	"time"
 )
 
+var (
+	_ interfaces.User       = (*UserService)(nil)
+	_ interfaces.UserManage = (*UserManageService)(nil)
+)
+
+//ipPackage := qqwry.NewQQwry(config.Cfg.Server.QqwryPath)
+//ipPackage.Find(req.PublishedIp)
+
 type UserService struct {
 	repo      *repository.UserRepository
-	validator *validator.CustomValidator // 添加验证器
+	validator *validator.CustomValidator
+}
+
+type UserManageService struct {
+	repo      *repository.UserRepository
+	validator *validator.CustomValidator
 }
 
 func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{
 		repo:      repository.NewUserRepository(db),
 		validator: validator.NewCustomValidator(), // 初始化验证器
+	}
+}
+
+func NewUserManageService(db *gorm.DB) *UserManageService {
+	return &UserManageService{
+		repo:      repository.NewUserRepository(db),
+		validator: validator.NewCustomValidator(),
 	}
 }
 
@@ -48,8 +70,8 @@ func (s *UserService) Create(user *model.User) (*model.User, error) {
 		Nickname:  user.Nickname,
 		Email:     user.Email,
 		Password:  user.Password,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: formatTime.Time{Time: time.Now()},
+		UpdatedAt: formatTime.Time{Time: time.Now()},
 	}
 	err = s.repo.Create(newUser)
 	if err != nil {
@@ -83,7 +105,7 @@ func (s *UserService) Update(user *model.User) (*model.User, error) {
 	exist.Status = user.Status
 	exist.Nickname = user.Nickname
 	exist.Email = user.Email
-	exist.UpdatedAt = time.Now()
+	exist.UpdatedAt = formatTime.Time{Time: time.Now()}
 	err = s.repo.Update(exist)
 	if err != nil {
 		return nil, err
@@ -99,10 +121,6 @@ func (s *UserService) Update(user *model.User) (*model.User, error) {
 		CreatedAt: exist.CreatedAt,
 		UpdatedAt: exist.UpdatedAt,
 	}, nil
-}
-
-func (s *UserService) Delete(id uint) error {
-	return s.repo.Delete(id)
 }
 
 func (s *UserService) GetByID(id uint) (*model.User, error) {
@@ -145,7 +163,11 @@ func (s *UserService) GetByPhone(phone string) (*model.User, error) {
 	}, nil
 }
 
-func (s *UserService) List(pageNum, pageSize int) ([]*model.User, int64, error) {
+func (s *UserManageService) Delete(id uint) error {
+	return s.repo.Delete(id)
+}
+
+func (s *UserManageService) List(pageNum, pageSize int) ([]*model.User, int64, error) {
 	// 计算分页参数
 	offset := (pageNum - 1) * pageSize
 
