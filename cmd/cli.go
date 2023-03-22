@@ -4,10 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli/v2"
 	"github.com/voyager-go/GoWeb/internal/config"
+	"github.com/voyager-go/GoWeb/internal/router"
 	"github.com/voyager-go/GoWeb/pkg/logging"
 	"github.com/voyager-go/GoWeb/pkg/mysql"
 	"github.com/voyager-go/GoWeb/pkg/orm"
 	"github.com/voyager-go/GoWeb/pkg/redis"
+	"net/http"
 	"path/filepath"
 	"strconv"
 )
@@ -33,8 +35,6 @@ var App = &cli.App{
 		redis.InitPool(config.App.GetRedisURL(), "")
 		// 初始化Gorm
 		orm.InitPool(config.App.GetMysqlDSN())
-		// 初始化验证器翻译
-		//validator_trans.NewTrans()
 		return nil
 	},
 	Action: func(*cli.Context) error {
@@ -43,7 +43,13 @@ var App = &cli.App{
 		)
 		// 404 处理
 		srv.NoRoute(func(ctx *gin.Context) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"code":    http.StatusNotFound,
+				"message": "The page you requested is not found",
+			})
 		})
+		// 初始化路由
+		router.InitRouter(srv)
 		// 启动项目
 		return srv.Run(":" + strconv.Itoa(config.App.Server.Port))
 	},
