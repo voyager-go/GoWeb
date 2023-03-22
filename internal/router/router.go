@@ -19,7 +19,6 @@ func InitRouter(srv *gin.Engine) {
 
 func initUserRoutes(r *gin.RouterGroup, userService *service.UserService) {
 	userAPI := frontend.NewUserAPI(userService)
-	r.POST("/sign-up", userAPI.Register)
-	r.GET("/list", userAPI.List)
+	r.POST("/sign-up", userAPI.SignUp)
 	r.GET("/profile", userAPI.GetByID)
 }

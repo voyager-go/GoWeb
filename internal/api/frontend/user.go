@@ -19,7 +19,7 @@ func NewUserAPI(service *service.UserService) *UserAPI {
 }
 
 // Register 注册用户
-func (api *UserAPI) Register(c *gin.Context) {
+func (api *UserAPI) SignUp(c *gin.Context) {
 	// 解析请求参数
 	var user model.User
 	if err := c.BindJSON(&user); err != nil {
