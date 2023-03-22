@@ -14,7 +14,7 @@ func InitRouter(srv *gin.Engine) {
 	api := srv.Group("/api")
 
 	// 初始化各个分组的路由
-	initUserRoutes(api.Group("/user"), userService)
+	initUserRoutes(api.Group("user"), userService)
 }
 
 func initUserRoutes(r *gin.RouterGroup, userService *service.UserService) {
