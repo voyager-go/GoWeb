@@ -13,6 +13,7 @@ type AppConfig struct {
 	Server   ServerConfig `yaml:"server"`
 	Database MysqlConfig  `yaml:"database"`
 	Redis    RedisConfig  `yaml:"redis"`
+	Jwt      JwtConfig    `yaml:"jwt"`
 }
 
 // InitConfig 从指定路径读取配置文件，并解析为 AppConfig 结构体

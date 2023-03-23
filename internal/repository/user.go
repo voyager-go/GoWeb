@@ -2,7 +2,9 @@ package repository
 
 import (
 	"github.com/voyager-go/GoWeb/internal/model"
+	"github.com/voyager-go/GoWeb/pkg/formatTime"
 	"gorm.io/gorm"
+	"time"
 )
 
 type UserRepository struct {
@@ -14,6 +16,9 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 func (r *UserRepository) Create(user *model.User) error {
+	now := formatTime.Time{Time: time.Now()}
+	user.CreatedAt = now
+	user.UpdatedAt = now
 	return r.db.Create(user).Error
 }
 
@@ -24,7 +29,7 @@ func (r *UserRepository) Update(user *model.User) error {
 		"nickname":   user.Nickname,
 		"email":      user.Email,
 		"password":   user.Password,
-		"updated_at": user.UpdatedAt,
+		"updated_at": formatTime.Time{Time: time.Now()},
 	}).Error
 }
 
@@ -32,7 +37,7 @@ func (r *UserRepository) Delete(id uint) error {
 	return r.db.Delete(&model.User{}, id).Error
 }
 
-func (r *UserRepository) GetByID(id uint) (*model.User, error) {
+func (r *UserRepository) FindByID(id uint) (*model.User, error) {
 	user := new(model.User)
 	err := r.db.First(&user, id).Error
 	if err != nil {
@@ -41,7 +46,7 @@ func (r *UserRepository) GetByID(id uint) (*model.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetByPhone(phone string) (*model.User, error) {
+func (r *UserRepository) FindByPhone(phone string) (*model.User, error) {
 	user := new(model.User)
 	if err := r.db.Where("phone = ?", phone).First(user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

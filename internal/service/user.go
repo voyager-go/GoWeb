@@ -2,13 +2,14 @@ package service
 
 import (
 	"errors"
+	"github.com/voyager-go/GoWeb/internal/costant"
 	"github.com/voyager-go/GoWeb/internal/interfaces"
 	"github.com/voyager-go/GoWeb/internal/model"
 	"github.com/voyager-go/GoWeb/internal/repository"
-	"github.com/voyager-go/GoWeb/pkg/formatTime"
+	"github.com/voyager-go/GoWeb/internal/request"
 	"github.com/voyager-go/GoWeb/pkg/validator"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"time"
 )
 
 var (
@@ -43,35 +44,51 @@ func NewUserManageService(db *gorm.DB) *UserManageService {
 	}
 }
 
-func (s *UserService) Create(user *model.User) (*model.User, error) {
+func (s *UserService) CheckAccount(req *request.UserSignInReq) (*model.User, bool) {
+	user, err := s.repo.FindByPhone(req.Phone)
+	if err != nil {
+		return nil, false
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		return nil, false
+	}
+	return user, true
+}
+
+func (s *UserService) Create(req *request.UserCreateReq) (*model.User, error) {
 	// 验证用户参数
-	err := s.validator.ValidateStruct(user)
+	err := s.validator.ValidateStruct(req)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 	// 检查手机号是否已经存在
-	exist, err := s.repo.GetByPhone(user.Phone)
+	exist, err := s.repo.FindByPhone(req.Phone)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		// 如果查询出错并且不是记录不存在的错误，则返回错误信息
 		return nil, err
 	}
 	if exist != nil {
 		// 如果手机号已经存在，则返回错误信息
-		return nil, errors.New("phone already exists")
+		return nil, errors.New("手机号已经存在")
 	}
 
 	// 生成密码哈希
-	// TODO: 在此处对密码进行哈希处理
 
+	password, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, errors.New("密码加密失败")
+	}
+	if req.Status == 0 {
+		req.Status = uint8(costant.Enabled)
+	}
 	// 构造新的 User 对象，并插入到数据库中
 	newUser := &model.User{
-		Phone:     user.Phone,
-		Status:    user.Status,
-		Nickname:  user.Nickname,
-		Email:     user.Email,
-		Password:  user.Password,
-		CreatedAt: formatTime.Time{Time: time.Now()},
-		UpdatedAt: formatTime.Time{Time: time.Now()},
+		Phone:    req.Phone,
+		Status:   req.Status,
+		Nickname: req.Nickname,
+		Email:    req.Email,
+		Password: string(password),
 	}
 	err = s.repo.Create(newUser)
 	if err != nil {
@@ -92,12 +109,12 @@ func (s *UserService) Create(user *model.User) (*model.User, error) {
 
 func (s *UserService) Update(user *model.User) (*model.User, error) {
 	// 检查用户是否存在
-	exist, err := s.repo.GetByID(user.ID)
+	exist, err := s.repo.FindByID(user.ID)
 	if err != nil {
 		return nil, err
 	}
 	if exist == nil {
-		return nil, errors.New("user not found")
+		return nil, errors.New("该记录不存在")
 	}
 
 	// 更新 User 对象，并保存到数据库中
@@ -105,7 +122,6 @@ func (s *UserService) Update(user *model.User) (*model.User, error) {
 	exist.Status = user.Status
 	exist.Nickname = user.Nickname
 	exist.Email = user.Email
-	exist.UpdatedAt = formatTime.Time{Time: time.Now()}
 	err = s.repo.Update(exist)
 	if err != nil {
 		return nil, err
@@ -125,7 +141,7 @@ func (s *UserService) Update(user *model.User) (*model.User, error) {
 
 func (s *UserService) GetByID(id uint) (*model.User, error) {
 	// 查询 User 对象，并将数据库返回结果转换为接口类型并返回
-	user, err := s.repo.GetByID(id)
+	user, err := s.repo.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +161,7 @@ func (s *UserService) GetByID(id uint) (*model.User, error) {
 
 func (s *UserService) GetByPhone(phone string) (*model.User, error) {
 	// 查询 User 对象，并将数据库返回结果转换为接口类型并返回
-	user, err := s.repo.GetByPhone(phone)
+	user, err := s.repo.FindByPhone(phone)
 	if err != nil {
 		return nil, err
 	}

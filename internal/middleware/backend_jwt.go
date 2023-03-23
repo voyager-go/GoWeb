@@ -2,18 +2,17 @@ package middleware
 
 import (
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 	"github.com/voyager-go/GoWeb/internal/config"
 	"github.com/voyager-go/GoWeb/internal/service"
 	"github.com/voyager-go/GoWeb/pkg/helper"
 	"github.com/voyager-go/GoWeb/pkg/orm"
 	"github.com/voyager-go/GoWeb/pkg/response"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
-// JWTMiddleware 基于JWT的鉴权中间件
-func JWTMiddleware() gin.HandlerFunc {
+// BackendJWTMiddleware 基于JWT的鉴权中间件
+func BackendJWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		secret := config.App.Jwt.Secret
 		authHeader := c.GetHeader("Authorization")
@@ -40,14 +39,14 @@ func JWTMiddleware() gin.HandlerFunc {
 
 		if claims, ok := token.Claims.(*helper.Claims); ok && token.Valid {
 			// 验证该ID是否对应数据库中的一个用户
-			user, err := service.NewUserService(orm.Conn).GetByID(claims.ID)
+			admin, err := service.NewAdminService(orm.Conn).GetByID(claims.ID)
 			if err != nil {
 				response.Fail(c, response.InvalidAuthorizationToken, nil)
 				c.Abort()
 				return
 			}
 			// 验证通过，将用户ID存储到上下文中
-			c.Set("user", user)
+			c.Set("admin", admin)
 			c.Next()
 			return
 		}

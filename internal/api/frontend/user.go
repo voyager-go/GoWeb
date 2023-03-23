@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/voyager-go/GoWeb/internal/config"
 	"github.com/voyager-go/GoWeb/internal/model"
+	"github.com/voyager-go/GoWeb/internal/request"
 	"github.com/voyager-go/GoWeb/internal/service"
+	"github.com/voyager-go/GoWeb/pkg/helper"
 	"github.com/voyager-go/GoWeb/pkg/response"
 	"strconv"
 )
@@ -18,17 +21,18 @@ func NewUserAPI(service *service.UserService) *UserAPI {
 	return &UserAPI{service: service}
 }
 
-// Register 注册用户
+// SignUp 注册用户
 func (api *UserAPI) SignUp(c *gin.Context) {
 	// 解析请求参数
-	var user model.User
-	if err := c.BindJSON(&user); err != nil {
+	var req request.UserCreateReq
+	if err := c.BindJSON(&req); err != nil {
 		response.Fail(c, response.RequestParameterError, err)
 		return
 	}
 
 	// 调用 UserService 的 Create 方法创建用户
-	result, err := api.service.Create(&user)
+	result, err := api.service.Create(&req)
+	fmt.Println(result)
 	if err != nil {
 		response.Fail(c, response.OperationExecutionFailure, err)
 		return
@@ -36,6 +40,25 @@ func (api *UserAPI) SignUp(c *gin.Context) {
 
 	// 返回结果给客户端
 	response.OK(c, result)
+}
+
+func (api *UserAPI) SignIn(c *gin.Context) {
+	var req request.UserSignInReq
+	if err := c.BindJSON(&req); err != nil {
+		response.Fail(c, response.RequestParameterError, err)
+		return
+	}
+	user, ifExist := api.service.CheckAccount(&req)
+	if !ifExist {
+		response.Fail(c, response.OperationExecutionFailure, errors.New("手机与密码不匹配，请重试"))
+		return
+	}
+	token, err := helper.GenerateToken(user.ID, config.App.Jwt.Secret, config.App.Jwt.Expired)
+	if err != nil {
+		response.Fail(c, response.OperationExecutionFailure, errors.New("令牌生成失败，请联系管理员"))
+		return
+	}
+	response.OK(c, token)
 }
 
 // Update 更新用户信息
@@ -61,37 +84,31 @@ func (api *UserAPI) Update(c *gin.Context) {
 // GetByID 根据 ID 获取用户信息
 func (api *UserAPI) GetByID(c *gin.Context) {
 	// 获取用户 ID 参数
-	id, err := GetIDParam(c)
-	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	idStr := c.Param("id")
+	if idStr == "" {
+		response.Fail(c, response.RequestParameterError, nil)
 		return
 	}
-
-	// 调用 UserService 的 GetByID 方法获取用户信息
-	result, err := api.service.GetByID(id)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		response.Fail(c, response.OperationExecutionFailure, errors.New("类型转换时发生异常"))
+		return
+	}
+	// 调用 UserService 的 GetByID 方法获取用户信息
+	result, err := api.service.GetByID(uint(id))
+	if err != nil {
+		response.Fail(c, response.OperationExecutionFailure, err)
 		return
 	}
 
 	// 如果用户不存在，则返回 404 错误
 	if result == nil {
-		c.JSON(404, gin.H{"error": "user not found"})
+		response.Fail(c, response.OperationExecutionFailure, errors.New("未查找到用户"))
 		return
 	}
 
 	// 返回结果给客户端
-	c.JSON(200, result)
-}
-
-// GetIDParam 从 URL 参数中获取用户 ID
-func GetIDParam(c *gin.Context) (uint, error) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		return 0, errors.New("invalid id parameter")
-	}
-	return uint(id), nil
+	response.OK(c, result)
 }
 
 // GetPaginationParams 从 URL 参数中获取分页参数
