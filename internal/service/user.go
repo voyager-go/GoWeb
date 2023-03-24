@@ -80,7 +80,7 @@ func (s *UserService) Create(req *request.UserCreateReq) (*model.User, error) {
 		return nil, errors.New("密码加密失败")
 	}
 	if req.Status == 0 {
-		req.Status = uint8(costant.Enabled)
+		req.Status = uint8(costant.UserEnabled)
 	}
 	// 构造新的 User 对象，并插入到数据库中
 	newUser := &model.User{

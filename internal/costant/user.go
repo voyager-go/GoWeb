@@ -1,18 +1,18 @@
 package costant
 
-type Status int
+type UserStatus int
 
 const (
-	Enabled  Status = 1 // 启用
-	Disabled Status = 2 // 禁用
+	UserEnabled  UserStatus = 1 // 启用
+	UserDisabled UserStatus = 2 // 禁用
 )
 
-// GetStatusComment 获取状态枚举的注释说明
-func GetStatusComment(status Status) string {
+// GetUserStatusComment 获取状态枚举的注释说明
+func GetUserStatusComment(status UserStatus) string {
 	switch status {
-	case Enabled:
+	case UserEnabled:
 		return "启用"
-	case Disabled:
+	case UserDisabled:
 		return "禁用"
 	default:
 		return "未知"
